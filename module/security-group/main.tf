@@ -247,7 +247,7 @@ resource "aws_security_group" "rds-sg" {
 
   #Inbound Rules
   ingress {
-    description = "SonarQube port"
+    description = "RDS port"
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
