@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # Set your bucket name and region
-bucket_name="ansible-discovery"
-region="eu-west-1"
-#Set dynamodb table name
+bucket_name="ansible-discovery-env"
+region="eu-west-2"
 dynamodb_name="ansible-discovery-table"
 
 #Create the s3 bucket
