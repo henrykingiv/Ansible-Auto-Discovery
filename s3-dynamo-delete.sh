@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Set your bucket, dynamodb name and region
-bucket_name="ansible-discovery"
-region="eu-west-1"
+bucket_name="ansible-discovery-env"
+region="eu-west-2"
 dynamodb_name="ansible-discovery-table"
 
 #Delete S3 Bucket
