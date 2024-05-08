@@ -77,3 +77,49 @@ module "sonarqube" {
   nr-region      = ""
 }
 
+module "ansible" {
+  source                   = "./module/ansible"
+  ami-redhat               = "ami-035cecbff25e0d91e"
+  ansible-sg               = module.security_groups.ansible-sg
+  key-name                 = module.keypair.keypair_Pub
+  subnet-id                = module.vpc.privatesub2
+  ansible-name             = "${local.name}-ansible-auto"
+  staging-MyPlaybook       = "${path.root}/module/ansible/stage-playbook.yaml"
+  prod-MyPlaybook          = "${path.root}/module/ansible/prod-playbook.yaml"
+  staging-discovery-script = "${path.root}/module/ansible/stage-inventory-bash-script.sh"
+  prod-discovery-script    = "${path.root}/module/ansible/prod-inventory-bash-script.sh"
+  private_key              = module.keypair.private_key_pem
+  nexus-ip                 = module.nexus.nexus-ip
+  nr-key                   = ""
+  nr-acc-id                = ""
+  nr-region                = ""
+}
+
+module "stage-asg" {
+  source = "./module/stage-asg"
+  ami-stg = "ami-035cecbff25e0d91e"
+  key-name = module.keypair.keypair_Pub
+  asg-sg = module.security_groups.asg-sg
+  nexus-ip-stg = module.nexus.nexus-ip
+  nr-key-stg = ""
+  nr-acc-id-stg = ""
+  nr-region-stg = "EU"
+  asg-stg-name = "${local.name}-stage-asg"
+  vpc-zone-id-stg = [module.vpc.privatesub1, module.vpc.privatesub2, module.vpc.privatesub3]
+  tg-arn = ""
+}
+
+module "prod-asg" {
+  source = "./module/prod-asg"
+  ami-prd = "ami-035cecbff25e0d91e"
+  key-name = module.keypair.keypair_Pub
+  asg-sg = module.security_groups.asg-sg
+  nexus-ip-prd = module.nexus.nexus-ip
+  nr-acc-id-prd = ""
+  nr-key-prd = ""
+  nr-region-prd = "EU"
+  asg-prd-name = "${local.name}-prod-asg"
+  vpc-zone-id-prd = [module.vpc.privatesub1, module.vpc.privatesub2, module.vpc.privatesub3]
+  tg-arn = ""
+}
+
