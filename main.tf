@@ -2,6 +2,10 @@ locals {
   name = "ansible-discovery"
 }
 
+data "vault_generic_secret" "vault-secret" {
+  path = "secret/database"
+}
+
 data "aws_acm_certificate" "cert" {
   domain      = "henrykingroyal.co"
   types       = ["AMAZON_ISSUED"]
@@ -44,9 +48,9 @@ module "jenkins" {
   subnet-elb   = [module.vpc.publicsub1, module.vpc.publicsub2, module.vpc.publicsub3]
   cert-arn     = data.aws_acm_certificate.cert.arn
   nexus-ip     = module.nexus.nexus-ip
-  nr-key       = ""
-  nr-acc-id    = ""
-  nr-region    = ""
+  nr-key       = "NRAK-L7K04IRWOENEK2OOEWZI4W1G5ZL"
+  nr-acc-id    = "4246321"
+  nr-region    = "EU"
 }
 
 module "nexus" {
@@ -58,9 +62,9 @@ module "nexus" {
   nexus-name  = "${local.name}-nexus"
   elb-subnets = [module.vpc.publicsub1, module.vpc.publicsub2, module.vpc.publicsub3]
   cert-arn    = data.aws_acm_certificate.cert.arn
-  nr-key      = ""
-  nr-acc-id   = ""
-  nr-region   = ""
+  nr-key      = "NRAK-L7K04IRWOENEK2OOEWZI4W1G5ZL"
+  nr-acc-id   = "4246321"
+  nr-region   = "EU"
 }
 
 module "sonarqube" {
@@ -72,9 +76,9 @@ module "sonarqube" {
   sonarqube-name = "${local.name}-sonarqube"
   elb-subnets    = [module.vpc.publicsub1, module.vpc.publicsub2, module.vpc.publicsub3]
   cert-arn       = data.aws_acm_certificate.cert.arn
-  nr-acc-id      = ""
-  nr-key         = ""
-  nr-region      = ""
+  nr-acc-id      = "4246321"
+  nr-key         = "NRAK-L7K04IRWOENEK2OOEWZI4W1G5ZL"
+  nr-region      = "EU"
 }
 
 module "ansible" {
@@ -90,36 +94,85 @@ module "ansible" {
   prod-discovery-script    = "${path.root}/module/ansible/prod-inventory-bash-script.sh"
   private_key              = module.keypair.private_key_pem
   nexus-ip                 = module.nexus.nexus-ip
-  nr-key                   = ""
-  nr-acc-id                = ""
-  nr-region                = ""
+  nr-key                   = "NRAK-L7K04IRWOENEK2OOEWZI4W1G5ZL"
+  nr-acc-id                = "4246321"
+  nr-region                = "EU"
 }
 
 module "stage-asg" {
-  source = "./module/stage-asg"
-  ami-stg = "ami-035cecbff25e0d91e"
-  key-name = module.keypair.keypair_Pub
-  asg-sg = module.security_groups.asg-sg
-  nexus-ip-stg = module.nexus.nexus-ip
-  nr-key-stg = ""
-  nr-acc-id-stg = ""
-  nr-region-stg = "EU"
-  asg-stg-name = "${local.name}-stage-asg"
+  source          = "./module/stage-asg"
+  ami-stg         = "ami-035cecbff25e0d91e"
+  key-name        = module.keypair.keypair_Pub
+  asg-sg          = module.security_groups.asg-sg
+  nexus-ip-stg    = module.nexus.nexus-ip
+  nr-key-stg      = "NRAK-L7K04IRWOENEK2OOEWZI4W1G5ZL"
+  nr-acc-id-stg   = "4246321"
+  nr-region-stg   = "EU"
+  asg-stg-name    = "${local.name}-stage-asg"
   vpc-zone-id-stg = [module.vpc.privatesub1, module.vpc.privatesub2, module.vpc.privatesub3]
-  tg-arn = ""
+  tg-arn          = module.stage-lb.stage-tg-arn
 }
 
 module "prod-asg" {
-  source = "./module/prod-asg"
-  ami-prd = "ami-035cecbff25e0d91e"
-  key-name = module.keypair.keypair_Pub
-  asg-sg = module.security_groups.asg-sg
-  nexus-ip-prd = module.nexus.nexus-ip
-  nr-acc-id-prd = ""
-  nr-key-prd = ""
-  nr-region-prd = "EU"
-  asg-prd-name = "${local.name}-prod-asg"
+  source          = "./module/prod-asg"
+  ami-prd         = "ami-035cecbff25e0d91e"
+  key-name        = module.keypair.keypair_Pub
+  asg-sg          = module.security_groups.asg-sg
+  nexus-ip-prd    = module.nexus.nexus-ip
+  nr-acc-id-prd   = "4246321"
+  nr-key-prd      = "NRAK-L7K04IRWOENEK2OOEWZI4W1G5ZL"
+  nr-region-prd   = "EU"
+  asg-prd-name    = "${local.name}-prod-asg"
   vpc-zone-id-prd = [module.vpc.privatesub1, module.vpc.privatesub2, module.vpc.privatesub3]
-  tg-arn = ""
+  tg-arn          = module.prod-lb.prod-tg-arn
+}
+
+module "stage-lb" {
+  source = "./module/stage-lb"
+  vpc_id = module.vpc.vpc
+  stage-sg = [module.security_groups.asg-sg]
+  stage-subnet = [module.vpc.publicsub1, module.vpc.publicsub2, module.vpc.publicsub3]
+  stage-alb-name = "${local.name}-stage-lb"
+  certificate_arn = data.aws_acm_certificate.cert.arn
+}
+
+module "prod-lb" {
+  source = "./module/prod-lb"
+  vpc_id = module.vpc.vpc
+  prod-sg = [module.security_groups.asg-sg]
+  prod-subnet = [module.vpc.publicsub1, module.vpc.publicsub2, module.vpc.publicsub3]
+  prod-alb-name = "${local.name}-prod-lb"
+  certificate_arn = data.aws_acm_certificate.cert.arn
+}
+
+module "az-db" {
+  source = "./module/az-db"
+  db_subnet_grp = "db-subnetgrp"
+  subnet = [module.vpc.privatesub1, module.vpc.privatesub2, module.vpc.privatesub3]
+  tag-db-subnet = "${local.name}-az-db"
+  security_group_mysql_sg = module.security_groups.rds-sg
+  db_name = "petclinic"
+  db_username = data.vault_generic_secret.vault-secret.data["username"]
+  db_password = data.vault_generic_secret.vault-secret.data["password"]
+}
+
+module "route53" {
+  source = "./module/route53"
+  domain_name = "henrykingroyal.co"
+  jenkins_domain_name = "jenkins.henrykingroyal.co"
+  jenkins_lb_dns_name = module.jenkins.jenkins-dns-name
+  jenkins_lb_zone_id = module.jenkins.jenkins-zone-id
+  nexus_domain_name = "nexus.henrykingroyal.co"
+  nexus_lb_dns_name = module.nexus.nexus-dns-name
+  nexus_lb_zone_id = module.nexus.nexus-zone-id
+  sonarqube_domain_name = "sonarqube.henrykingroyal.co"
+  sonarqube_lb_dns_name = module.sonarqube.sonarqube-dns-name
+  sonarqube_lb_zone_id = module.sonarqube.sonarqube-zone-id
+  prod_domain_name = "prod.henrykingroyal.co"
+  prod_lb_dns_name = module.prod-lb.prod-lb-dns
+  prod_lb_zone_id = module.prod-lb.prod-lb-zone-id
+  stage_domain_name = "stage.henrykingroyal.co"
+  stage_lb_dns_name = module.stage-lb.stage-lb-dns
+  stage_lb_zone_id = module.stage-lb.stage-lb-zone-id
 }
 
