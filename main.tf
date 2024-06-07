@@ -2,9 +2,9 @@ locals {
   name = "ansible-discovery"
 }
 
-data "vault_generic_secret" "vault-secret" {
-  path = "secret/database"
-}
+# data "vault_generic_secret" "vault-secret" {
+#   path = "secret/database"
+# }
 
 data "aws_acm_certificate" "cert" {
   domain      = "henrykingroyal.co"
@@ -145,6 +145,14 @@ module "prod-lb" {
   certificate_arn = data.aws_acm_certificate.cert.arn
 }
 
+data "aws_secretsmanager_secret" "db_credentials" {
+  name = "MyDatabaseCredentials"
+}
+
+data "aws_secretsmanager_secret_version" "db_credentials_version" {
+  secret_id = data.aws_secretsmanager_secret.db_credentials.id
+}
+
 module "az-db" {
   source = "./module/az-db"
   db_subnet_grp = "db-subnetgrp"
@@ -152,8 +160,10 @@ module "az-db" {
   tag-db-subnet = "${local.name}-az-db"
   security_group_mysql_sg = module.security_groups.rds-sg
   db_name = "petclinic"
-  db_username = data.vault_generic_secret.vault-secret.data["username"]
-  db_password = data.vault_generic_secret.vault-secret.data["password"]
+  db_username = jsondecode(data.aws_secretsmanager_secret_version.db_credentials_version.secret_string)["username"]
+  db_password = jsondecode(data.aws_secretsmanager_secret_version.db_credentials_version.secret_string)["password"]
+  #db_username = data.vault_generic_secret.vault-secret.data["username"]
+  #db_password = data.vault_generic_secret.vault-secret.data["password"]
 }
 
 module "route53" {

@@ -99,7 +99,7 @@ sudo systemctl enable vault
 
 #Set vault token/secret username and password
 vault operator init > output.txt
-grep -o 's\.[A-Za-z0-9]\{24\}' output.txt > token.txt
+grep -o 's\.[A-Za-z0-9]\{24\}' output.txt > /home/ubuntu/token.txt
 token_content=$(<token.txt)
 vault login $token_content
 vault secrets enable -path=secret/ kv
