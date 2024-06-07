@@ -3,7 +3,7 @@ provider "aws" {
   profile = "LeadUser"
 }
 
-provider "vault" {
-  token = "s.SeTBe2D1WjTFqOhTj8clkTzV"
-  address = "https://vault.henrykingroyal.co/"
-}
+# provider "vault" {
+#   token = "s.GnAFTsGl4EBEPS7wzGMo3G34"
+#   address = "https://vault.henrykingroyal.co/"
+# }
