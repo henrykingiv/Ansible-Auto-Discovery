@@ -30,9 +30,10 @@ else
   echo "Failed to create S3 bucket $dynamodb_name."
 fi
 
-This Project made use of vault and AWS secret to store database credentials, the aws command below will either create or destroy aws secret manager.
+This Project made use of vault and AWS secret to store database credentials/NewRelic Credentials, the aws command below will either create or destroy aws secret manager.
 #Create AWS secret manager
  aws secretsmanager create-secret --name MyDatabaseCredentials --secret-string '{"username":"xxxx","password":"xxxx"}' --description "My database credentials" --region eu-west-2 --tags Key=Environment,Value=Production
+ aws secretsmanager create-secret --name MyNewRelicCredentials --secret-string '{"newrelicid":"xxxxx","newrelickey":"xxxx"}' --description "My newrelic credentials" --region eu-west-2 --tags Key=Environment,Value=Production
 
 #Destroy aws secrets
  aws secretsmanager delete-secret --secret-id MyDatabaseCredentials --force-delete-without-recovery --region eu-west-2
